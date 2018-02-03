@@ -1,9 +1,14 @@
 package com.zyw.horrarndoo.updatedemo.download;
 
 public interface OnDownloadListener {
+    /**
+     * 下载文件异常，不是完整的文件或者文件包异常
+     */
+    void onException();
 
     /**
      * 下载进度变化
+     *
      * @param progress 当前下载进度
      */
     void onProgress(int progress);

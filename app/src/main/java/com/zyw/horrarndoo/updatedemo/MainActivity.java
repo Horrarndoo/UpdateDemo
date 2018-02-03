@@ -174,5 +174,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             showToast("update cancled.");
             dismissProgressDialog();
         }
+
+        @Override
+        public void onUpdateException() {
+            showToast("update exception.");
+            dismissProgressDialog();
+        }
     };
 }

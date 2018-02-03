@@ -34,4 +34,11 @@ public interface OnUpdateListener {
      * 更新已取消
      */
     void onUpdateCanceled();
+
+    /**
+     * 更新异常
+     *
+     * 主要是下载APK文件不完整或者APK包异常
+     */
+    void onUpdateException();
 }

@@ -2,9 +2,8 @@ package com.zyw.horrarndoo.updatedemo.download;
 
 import android.support.annotation.NonNull;
 
+import com.zyw.horrarndoo.updatedemo.utils.FileUtils;
 import com.zyw.horrarndoo.updatedemo.utils.StringUtils;
-
-import java.io.File;
 
 /**
  * Created by Horrarndoo on 2018/2/1.
@@ -21,6 +20,7 @@ public class DownloadManager {
     private String mFileParentPath;
 
     private DownloadManager() {
+        mFileParentPath = DownloadHelper.getDownloadParentFilePath();
     }
 
     public static DownloadManager getInstance() {
@@ -87,6 +87,18 @@ public class DownloadManager {
                 public void onFinished() {
                     downloadTask = null;
                 }
+
+                @Override
+                public void onCanceled() {
+                    //下载任务取消，删除已下载的文件
+                    clearCacheFile(getDownloadFilePath());
+                }
+
+                @Override
+                public void onException() {
+                    //下载任务异常，删除已下载的文件
+                    clearCacheFile(getDownloadFilePath());
+                }
             });
         }
     }
@@ -106,23 +118,29 @@ public class DownloadManager {
     public void cancelDownload() {
         if (downloadTask != null) {
             downloadTask.cancelDownload();
-        } else {
-            // 取消下载时将文件删除
-            clearCacheFile();
         }
     }
 
     /**
-     * 清除下载的cache文件
+     * 清除下载的全部cache文件
      */
-    public void clearCacheFile() {
-        if (StringUtils.isEmpty(mFileParentPath) || StringUtils.isEmpty(mFileName))
+    public void clearAllCacheFile() {
+        if (StringUtils.isEmpty(mFileParentPath))
             return;
 
-        File file = new File(mFileParentPath, mFileName);
-        if (file.exists()) {
-            file.delete();
-        }
+        FileUtils.delAllFile(mFileParentPath);
+    }
+
+    /**
+     * 清除下载的cache文件
+     *
+     * @param filePath 要删除文件的绝对路径
+     */
+    public void clearCacheFile(String filePath) {
+        if (StringUtils.isEmpty(filePath))
+            return;
+
+        FileUtils.delFile(filePath);
     }
 
     /**

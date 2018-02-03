@@ -28,6 +28,10 @@ public class DownloadTask extends AsyncTask<String, Integer, Integer> {
 
     private int lastProgress;
 
+    private File mDownloadFile = null;
+
+    private long mContentLength; // 记录url下载文件的长度
+
     public DownloadTask(OnDownloadListener onDownloadListener) {
         mOnDownloadListener = onDownloadListener;
     }
@@ -41,35 +45,35 @@ public class DownloadTask extends AsyncTask<String, Integer, Integer> {
     protected Integer doInBackground(String... params) {
         InputStream is = null;
         RandomAccessFile savedFile = null;
-        File file = null;
         try {
-            long downloadedLength = 0; // 记录已下载的文件长度
+
+            long downloadLength = 0; // 记录已下载的文件长度
             String downloadUrl = params[0];
             String fileParentPath = params[1];
             String fileName = params[2];
-            file = new File(fileParentPath, fileName);
-            if (file.exists()) {
-                downloadedLength = file.length();
+            mDownloadFile = new File(fileParentPath, fileName);
+            if (mDownloadFile.exists()) {
+                downloadLength = mDownloadFile.length();
             }
 
-            long contentLength = getContentLength(downloadUrl);
-            if (contentLength == 0) {
+            mContentLength = getContentLength(downloadUrl);
+            if (mContentLength == 0) {
                 return TYPE_FAILED;
-            } else if (contentLength == downloadedLength) {
+            } else if (mContentLength == downloadLength) {
                 // 已下载字节和文件总字节相等，说明已经下载完成了
                 return TYPE_SUCCESS;
             }
             OkHttpClient client = new OkHttpClient();
             Request request = new Request.Builder()
                     // 断点下载，指定从哪个字节开始下载
-                    .addHeader("RANGE", "bytes=" + downloadedLength + "-")
+                    .addHeader("RANGE", "bytes=" + downloadLength + "-")
                     .url(downloadUrl)
                     .build();
             Response response = client.newCall(request).execute();
             if (response != null) {
                 is = response.body().byteStream();
-                savedFile = new RandomAccessFile(file, "rw");
-                savedFile.seek(downloadedLength); // 跳过已下载的字节
+                savedFile = new RandomAccessFile(mDownloadFile, "rw");
+                savedFile.seek(downloadLength); // 跳过已下载的字节
                 byte[] b = new byte[1024];
                 int total = 0;
                 int len;
@@ -82,7 +86,7 @@ public class DownloadTask extends AsyncTask<String, Integer, Integer> {
                         total += len;
                         savedFile.write(b, 0, len);
                         // 计算已下载的百分比
-                        int progress = (int) ((total + downloadedLength) * 100 / contentLength);
+                        int progress = (int) ((total + downloadLength) * 100 / mContentLength);
                         publishProgress(progress);
                     }
                 }
@@ -99,8 +103,8 @@ public class DownloadTask extends AsyncTask<String, Integer, Integer> {
                 if (savedFile != null) {
                     savedFile.close();
                 }
-                if (isCanceled && file != null) {
-                    file.delete();
+                if (isCanceled && mDownloadFile != null) {
+                    mDownloadFile.delete();
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -122,16 +126,32 @@ public class DownloadTask extends AsyncTask<String, Integer, Integer> {
     protected void onPostExecute(Integer status) {
         switch (status) {
             case TYPE_SUCCESS:
-                mOnDownloadListener.onSuccess();
+                if (mContentLength != mDownloadFile.length()) {
+                    if (mOnDownloadListener != null)
+                        mOnDownloadListener.onException();
+
+                    //下载数据异常，告知downManager下载任务已失败
+                    if (mOnDownloadTaskFinshedListener != null)
+                        mOnDownloadTaskFinshedListener.onException();
+                } else {
+                    if (mOnDownloadListener != null)
+                        mOnDownloadListener.onSuccess();
+                }
                 break;
             case TYPE_FAILED:
-                mOnDownloadListener.onFailed();
+                if (mOnDownloadListener != null)
+                    mOnDownloadListener.onFailed();
                 break;
             case TYPE_PAUSED:
-                mOnDownloadListener.onPaused();
+                if (mOnDownloadListener != null)
+                    mOnDownloadListener.onPaused();
                 break;
             case TYPE_CANCELED:
-                mOnDownloadListener.onCanceled();
+                if (mOnDownloadListener != null)
+                    mOnDownloadListener.onCanceled();
+
+                if (mOnDownloadTaskFinshedListener != null)
+                    mOnDownloadTaskFinshedListener.onCanceled();
             default:
                 break;
         }
@@ -140,15 +160,26 @@ public class DownloadTask extends AsyncTask<String, Integer, Integer> {
             mOnDownloadTaskFinshedListener.onFinished();
     }
 
+    /**
+     * 暂停下载任务
+     */
     public void pauseDownload() {
         isPaused = true;
     }
 
-
+    /**
+     * 取消下载任务
+     */
     public void cancelDownload() {
         isCanceled = true;
     }
 
+    /**
+     * 获取下载文件长度
+     * @param downloadUrl 下载文件url
+     * @return 下载文件长度
+     * @throws IOException IOException
+     */
     private long getContentLength(String downloadUrl) throws IOException {
         OkHttpClient client = new OkHttpClient();
         Request request = new Request.Builder()
@@ -168,5 +199,15 @@ public class DownloadTask extends AsyncTask<String, Integer, Integer> {
          * 下载任务已结束
          */
         void onFinished();
+
+        /**
+         * 下载任务已取消
+         */
+        void onCanceled();
+
+        /**
+         * 下载文件异常，不是完整的文件或者文件包异常
+         */
+        void onException();
     }
 }
