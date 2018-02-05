@@ -9,11 +9,11 @@
 
 上图的效果，稍微将功能拆分一下，可以总结为以下几点。
 
-1. 检查更新；
-2. 最新apk下载；
-3. apk下载成功后应用内跳转安装；
+	1. 检查更新；
+	2. 最新apk下载；
+	3. apk下载成功后应用内跳转安装；
 		
-###1.检查更新
+### 1.检查更新
 
 为了检验检查更新的效果，我们需要一个tomcat服务器。至于tomcat怎么搭建，这里就不花篇幅去讲了，网上资料还是很多的。
 Tomcat部署完成后，在Tomcat ROOT目录上新建一个本次demo的目录，并且将新版的apk文件和一个保存了新版apk相关信息的json文件放在demo目录下。如下图所示：
@@ -96,7 +96,7 @@ Tomcat部署完成后，在Tomcat ROOT目录上新建一个本次demo的目录�
     }
 ```
 
-###2.最新apk文件下载
+### 2.最新apk文件下载
 
 如何检查更新的代码搞定了，接下来是稍微麻烦一点的，就是下载apk文件。
 由于下载文件可以作为一个单独的功能，所以将下载文件这一块单独独立出来作为一个子模块来编写。其实谷歌官方有提供专门的DownloadManager来下载文件，但是很多国内的rom把DownloadManager阉割了。所以这里我们自己来撸一个DownloadManager，具体代码如下，注释还是比较清晰的，就不多做解释了。
@@ -455,10 +455,10 @@ public class DownloadTask extends AsyncTask<String, Integer, Integer> {
 }
 ```
 
-###3.apk下载成功后应用内跳转安装
+### 3.apk下载成功后应用内跳转安装
 在7.0以前，通过apk的uri跳转安装就可以了。7.0以后由于StrictMode API 政策，需要通过FileProvider来安装apk文件，使用步骤也比较简单。
 		
-#####第一步：在AndroidManifest.xml清单文件中注册provider
+##### 第一步：在AndroidManifest.xml清单文件中注册provider
 
 -  exported:必须为false，true会报安全异常。
 -  grantUriPermissions:true，授予 URI 临时访问权限。
@@ -476,7 +476,7 @@ public class DownloadTask extends AsyncTask<String, Integer, Integer> {
 </provider>
 ```
 
-#####第二步：指定共享的目录
+##### 第二步：指定共享的目录
 在res资源目录下新建一个xml目录，并新建一个名字和上一步指定的resource文件相同名字的xml文件，这里是：file_paths。 file_path.xml的内容如下：
 
 ```
@@ -491,7 +491,7 @@ public class DownloadTask extends AsyncTask<String, Integer, Integer> {
 < cache-path />代表根目录: getCacheDir()
 external-path path=""代表根目录，也就是说你可以向其它的应用共享根目录及其子目录下任何一个文件了。
 
-#####第三步：使用FileProvider
+##### 第三步：使用FileProvider
 
 ```
     /**
