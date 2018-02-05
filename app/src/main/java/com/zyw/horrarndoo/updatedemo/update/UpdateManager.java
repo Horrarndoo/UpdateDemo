@@ -5,7 +5,6 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Message;
-import android.support.annotation.NonNull;
 import android.support.v4.content.FileProvider;
 import android.util.Log;
 
@@ -59,29 +58,25 @@ public class UpdateManager {
     private String mNewestVersionName;
     private String mNewVersionContent;
 
-    private IUpdateHelper mUpdateHelper;
-
     /**
      * 最后一次保存cache的时间
      */
     private long mLastCacheSaveTime = 0;
 
-    private UpdateManager(IUpdateHelper iUpdateHelper) {
+    private UpdateManager() {
         mDownloadManager = DownloadManager.getInstance();
-        mUpdateHelper = iUpdateHelper;
     }
 
     /**
      * 获取updateManager实例
      *
-     * @param i IUpdateHelper
      * @return updateManager实例
      */
-    public static UpdateManager getInstance(@NonNull IUpdateHelper i) {
+    public static UpdateManager getInstance() {
         if (manager == null) {
             synchronized (UpdateManager.class) {
                 if (manager == null) {
-                    manager = new UpdateManager(i);
+                    manager = new UpdateManager();
                 }
             }
         }
@@ -146,10 +141,13 @@ public class UpdateManager {
 
     /**
      * 检查更新
+     *
+     * @param apkInfoUrl            服务器端保存新版apk相关信息json的url
+     * @param onCheckUpdateListener onCheckUpdateListener
      */
-    public void checkUpdate(OnCheckUpdateListener onCheckUpdateListener) {
+    public void checkUpdate(String apkInfoUrl, OnCheckUpdateListener onCheckUpdateListener) {
         mOnCheckUpdateListener = onCheckUpdateListener;
-        HttpUtils.sendOkHttpRequest(mUpdateHelper.getNewestApkVersionInfoUrl(), new Callback() {
+        HttpUtils.sendOkHttpRequest(apkInfoUrl, new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
                 ToastUtils.showToast("check update failed.");
@@ -181,13 +179,13 @@ public class UpdateManager {
      * <p>
      * 此时开始正式下载更新Apk
      */
-    public void startToUpdate(OnUpdateListener onUpdateListener) {
+    public void startToUpdate(String apkUrl, OnUpdateListener onUpdateListener) {
         mOnUpdateListener = onUpdateListener;
 
         if (StringUtils.isEmpty(mNewestVersionName) || mNewestVersionCode == 0)
             return;
 
-        downloadNewestApkFile(mNewestVersionCode, mNewestVersionName);
+        downloadNewestApkFile(apkUrl, mNewestVersionCode, mNewestVersionName);
     }
 
     /**
@@ -249,16 +247,18 @@ public class UpdateManager {
     /**
      * 下载最新版本的APK文件
      *
+     * @param url               服务端最新apk文件url
      * @param newestVersionCode 最新版本APK版本号
      * @param newestVersionName 最新版本APK版本名称
      */
-    private void downloadNewestApkFile(int newestVersionCode, String newestVersionName) {
-        String apkFileName = getApkNameWithVersionName(DownloadHelper.getUrlFileName
-                (mUpdateHelper.getNewestApkUrl()), newestVersionName);
+    private void downloadNewestApkFile(String url, int newestVersionCode, String
+            newestVersionName) {
+        String apkFileName = getApkNameWithVersionName(DownloadHelper.getUrlFileName(url),
+                newestVersionName);
 
         sendMessage(MSG_ON_START, null);
 
-        mDownloadManager.startDownload(mUpdateHelper.getNewestApkUrl(), apkFileName, new
+        mDownloadManager.startDownload(url, apkFileName, new
                 OnDownloadListener() {
                     @Override
                     public void onException() {

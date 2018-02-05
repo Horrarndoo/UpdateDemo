@@ -17,7 +17,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.zyw.horrarndoo.updatedemo.constant.Constant;
-import com.zyw.horrarndoo.updatedemo.update.IUpdateHelper;
 import com.zyw.horrarndoo.updatedemo.update.OnCheckUpdateListener;
 import com.zyw.horrarndoo.updatedemo.update.OnUpdateListener;
 import com.zyw.horrarndoo.updatedemo.update.UpdateManager;
@@ -52,19 +51,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         initPermission();
 
-        mUpdateManager = UpdateManager.getInstance(new IUpdateHelper() {
-            @NonNull
-            @Override
-            public String getNewestApkVersionInfoUrl() {
-                return Constant.VERSION_INFO_URL;
-            }
-
-            @NonNull
-            @Override
-            public String getNewestApkUrl() {
-                return Constant.APK_URL;
-            }
-        });
+        mUpdateManager = UpdateManager.getInstance();
     }
 
     private void initProgressDialog() {
@@ -97,7 +84,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.btn_check_update:
-                mUpdateManager.checkUpdate(new OnCheckUpdateListener() {
+                mUpdateManager.checkUpdate(Constant.VERSION_INFO_URL, new OnCheckUpdateListener() {
                     @Override
                     public void onFindNewVersion(String versionName, String newVersionContent) {
                         String content = "最新版: V" + versionName + "\n" + newVersionContent;
@@ -155,7 +142,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         dialog.dismiss();
-                        mUpdateManager.startToUpdate(mOnUpdateListener);
+                        mUpdateManager.startToUpdate(Constant.APK_URL, mOnUpdateListener);
                     }
                 })
                 .setNegativeButton("取消", null)
