@@ -235,7 +235,7 @@ public class UpdateManager {
      * 取消更新
      */
     public void cancleUpdate() {
-        //保留下载已完成的部分apk cache文件，cache文件最多保留1天
+        //保留下载已完成的部分apk cache文件，cache文件最多保留7天
         mDownloadManager.pauseDownload();
     }
 
