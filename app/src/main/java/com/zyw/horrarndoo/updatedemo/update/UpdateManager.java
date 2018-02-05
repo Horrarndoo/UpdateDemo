@@ -178,6 +178,9 @@ public class UpdateManager {
      * 开始更新App
      * <p>
      * 此时开始正式下载更新Apk
+     *
+     * @param apkUrl           服务端最新apk文件url
+     * @param onUpdateListener onUpdateListener
      */
     public void startToUpdate(String apkUrl, OnUpdateListener onUpdateListener) {
         mOnUpdateListener = onUpdateListener;
