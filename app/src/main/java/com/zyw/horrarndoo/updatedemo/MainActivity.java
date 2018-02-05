@@ -13,11 +13,15 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
 
+import com.zyw.horrarndoo.updatedemo.constant.Constant;
+import com.zyw.horrarndoo.updatedemo.update.IUpdateHelper;
 import com.zyw.horrarndoo.updatedemo.update.OnCheckUpdateListener;
 import com.zyw.horrarndoo.updatedemo.update.OnUpdateListener;
 import com.zyw.horrarndoo.updatedemo.update.UpdateManager;
+import com.zyw.horrarndoo.updatedemo.utils.AppUtils;
 
 import static com.zyw.horrarndoo.updatedemo.utils.ToastUtils.showToast;
 
@@ -36,16 +40,31 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void init() {
-        Button startDownload = (Button) findViewById(R.id.btn_check_update);
-        Button cancelDownload = (Button) findViewById(R.id.btn_clear_apk);
-        startDownload.setOnClickListener(this);
-        cancelDownload.setOnClickListener(this);
+        TextView tvVersionName = (TextView) findViewById(R.id.tv_version_name);
+        Button btnCheckUpdate = (Button) findViewById(R.id.btn_check_update);
+        Button btnClearApk = (Button) findViewById(R.id.btn_clear_apk);
+
+        btnCheckUpdate.setOnClickListener(this);
+        btnClearApk.setOnClickListener(this);
+        tvVersionName.setText(AppUtils.getAppVersionName());
 
         initProgressDialog();
 
         initPermission();
 
-        mUpdateManager = UpdateManager.getInstance();
+        mUpdateManager = UpdateManager.getInstance(new IUpdateHelper() {
+            @NonNull
+            @Override
+            public String getNewestApkVersionInfoUrl() {
+                return Constant.VERSION_INFO_URL;
+            }
+
+            @NonNull
+            @Override
+            public String getNewestApkUrl() {
+                return Constant.APK_URL;
+            }
+        });
     }
 
     private void initProgressDialog() {

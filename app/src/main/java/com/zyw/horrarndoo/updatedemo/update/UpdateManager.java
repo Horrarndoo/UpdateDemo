@@ -5,12 +5,12 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Message;
+import android.support.annotation.NonNull;
 import android.support.v4.content.FileProvider;
 import android.util.Log;
 
 import com.zyw.horrarndoo.updatedemo.BuildConfig;
 import com.zyw.horrarndoo.updatedemo.bean.DataBean;
-import com.zyw.horrarndoo.updatedemo.constant.Constant;
 import com.zyw.horrarndoo.updatedemo.download.DownloadHelper;
 import com.zyw.horrarndoo.updatedemo.download.DownloadManager;
 import com.zyw.horrarndoo.updatedemo.download.OnDownloadListener;
@@ -59,20 +59,29 @@ public class UpdateManager {
     private String mNewestVersionName;
     private String mNewVersionContent;
 
+    private IUpdateHelper mUpdateHelper;
+
     /**
      * 最后一次保存cache的时间
      */
     private long mLastCacheSaveTime = 0;
 
-    private UpdateManager() {
+    private UpdateManager(IUpdateHelper iUpdateHelper) {
         mDownloadManager = DownloadManager.getInstance();
+        mUpdateHelper = iUpdateHelper;
     }
 
-    public static UpdateManager getInstance() {
+    /**
+     * 获取updateManager实例
+     *
+     * @param i IUpdateHelper
+     * @return updateManager实例
+     */
+    public static UpdateManager getInstance(@NonNull IUpdateHelper i) {
         if (manager == null) {
             synchronized (UpdateManager.class) {
                 if (manager == null) {
-                    manager = new UpdateManager();
+                    manager = new UpdateManager(i);
                 }
             }
         }
@@ -140,7 +149,7 @@ public class UpdateManager {
      */
     public void checkUpdate(OnCheckUpdateListener onCheckUpdateListener) {
         mOnCheckUpdateListener = onCheckUpdateListener;
-        HttpUtils.sendOkHttpRequest(Constant.VERSION_INFO_URL, new Callback() {
+        HttpUtils.sendOkHttpRequest(mUpdateHelper.getNewestApkVersionInfoUrl(), new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
                 ToastUtils.showToast("check update failed.");
@@ -244,48 +253,49 @@ public class UpdateManager {
      * @param newestVersionName 最新版本APK版本名称
      */
     private void downloadNewestApkFile(int newestVersionCode, String newestVersionName) {
-        String apkFileName = getApkNameWithVersionName(DownloadHelper.getUrlFileName(Constant
-                .APK_URL), newestVersionName);
+        String apkFileName = getApkNameWithVersionName(DownloadHelper.getUrlFileName
+                (mUpdateHelper.getNewestApkUrl()), newestVersionName);
 
         sendMessage(MSG_ON_START, null);
 
-        mDownloadManager.startDownload(Constant.APK_URL, apkFileName, new OnDownloadListener() {
-            @Override
-            public void onException() {
-                sendMessage(MSG_ON_UPDATE_EXCEPTION, null);
-            }
+        mDownloadManager.startDownload(mUpdateHelper.getNewestApkUrl(), apkFileName, new
+                OnDownloadListener() {
+                    @Override
+                    public void onException() {
+                        sendMessage(MSG_ON_UPDATE_EXCEPTION, null);
+                    }
 
-            @Override
-            public void onProgress(int progress) {
-                sendMessage(MSG_ON_PROGRESS, progress);
-            }
+                    @Override
+                    public void onProgress(int progress) {
+                        sendMessage(MSG_ON_PROGRESS, progress);
+                    }
 
-            @Override
-            public void onSuccess() {
-                mLastCacheSaveTime = System.currentTimeMillis();
-                sendMessage(MSG_ON_DOWNLOAD_FINISH, mDownloadManager.getDownloadFilePath());
-            }
+                    @Override
+                    public void onSuccess() {
+                        mLastCacheSaveTime = System.currentTimeMillis();
+                        sendMessage(MSG_ON_DOWNLOAD_FINISH, mDownloadManager.getDownloadFilePath());
+                    }
 
-            @Override
-            public void onFailed() {
-                mLastCacheSaveTime = System.currentTimeMillis();
-                sendMessage(MSG_ON_FAILED, null);
-            }
+                    @Override
+                    public void onFailed() {
+                        mLastCacheSaveTime = System.currentTimeMillis();
+                        sendMessage(MSG_ON_FAILED, null);
+                    }
 
-            @Override
-            public void onPaused() {
-                mLastCacheSaveTime = System.currentTimeMillis();
-                //取消升级时，调用download pause，保留已下载的部分apk文件
-                sendMessage(MSG_ON_CANCLE, null);
-            }
+                    @Override
+                    public void onPaused() {
+                        mLastCacheSaveTime = System.currentTimeMillis();
+                        //取消升级时，调用download pause，保留已下载的部分apk文件
+                        sendMessage(MSG_ON_CANCLE, null);
+                    }
 
-            @Override
-            public void onCanceled() {
-                //为了保证断点续传，升级时，调用download pause，不使用cancle，onCancle不会被调用
-                mLastCacheSaveTime = System.currentTimeMillis();
-                sendMessage(MSG_ON_CANCLE, null);
-            }
-        });
+                    @Override
+                    public void onCanceled() {
+                        //为了保证断点续传，升级时，调用download pause，不使用cancle，onCancle不会被调用
+                        mLastCacheSaveTime = System.currentTimeMillis();
+                        sendMessage(MSG_ON_CANCLE, null);
+                    }
+                });
     }
 
     private void sendMessage(int msgWhat, Object o) {

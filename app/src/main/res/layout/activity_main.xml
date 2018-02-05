@@ -1,23 +1,45 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
               android:orientation="vertical"
               android:paddingLeft="16dp"
-              android:paddingRight="16dp"
-              android:layout_width="match_parent"
-              android:layout_height="match_parent">
+              android:paddingRight="16dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:orientation="horizontal">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="当前版本V: "
+            android:textColor="@android:color/black"
+            android:textSize="18sp"/>
+
+        <TextView
+            android:id="@+id/tv_version_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text=""
+            android:textColor="@android:color/black"
+            android:textSize="18sp"/>
+    </LinearLayout>
 
     <Button
-        android:layout_marginTop="10dp"
         android:id="@+id/btn_check_update"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Check Update" />
+        android:layout_marginTop="10dp"
+        android:text="Check Update"/>
 
     <Button
-        android:layout_marginTop="10dp"
         android:id="@+id/btn_clear_apk"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Clear Apk" />
+        android:layout_marginTop="10dp"
+        android:text="Clear Apk"/>
 
 </LinearLayout>
